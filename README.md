@@ -1,1 +1,0 @@
-# ecliptica-onchain-bot
