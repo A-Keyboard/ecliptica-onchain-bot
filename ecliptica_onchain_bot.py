@@ -169,10 +169,12 @@ async def ask_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     query = " ".join(ctx.args) or "Please provide an on-chain trade idea."
     await update.message.reply_text("🔍 Fetching on-chain insights…")
     try:
-        # run blocking rei_call in thread pool
+        # run blocking rei_call in thread pool, serialized
         loop = asyncio.get_running_loop()
         async with token_lock:
-        ans = await loop.run_in_executor(None, functools.partial(rei_call, query, profile))
+            ans = await loop.run_in_executor(
+                None, functools.partial(rei_call, query, profile)
+            )
     except Exception:
         logging.exception("REI call failed")
         await update.message.reply_text(
@@ -186,7 +188,7 @@ async def ask_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     init_db()
-    app = Application.builder().token(BOT_TOKEN).concurrent_updates(False).build()()
+    app = Application.builder().token(BOT_TOKEN).concurrent_updates(False).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
     
