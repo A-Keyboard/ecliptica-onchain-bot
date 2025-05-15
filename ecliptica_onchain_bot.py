@@ -85,7 +85,7 @@ def rei_call(prompt: str, profile: dict[str,str]) -> str:
     body = {"model": "rei-core-chat-001", "temperature": 0.2, "messages": messages}
 
     # retry up to 2 times on 5xx errors
-    for attempt in range(2):
+    for attempt in range(3):
         start_ts = time.time()
         try:
             resp = requests.post(
@@ -101,7 +101,11 @@ def rei_call(prompt: str, profile: dict[str,str]) -> str:
         except requests.HTTPError as e:
             status = e.response.status_code if e.response else None
             logging.error(f"REI HTTPError {status} on attempt {attempt+1}")
-            if status and 500 <= status < 600 and attempt == 0:
+            if status and 500 <= status < 600:
+                backoff = 2 ** attempt
+                logging.info(f"REI HTTPError {status} on attempt {attempt+1}, retrying in {backoff}s")
+                time.sleep(backoff)
+                continue
                 time.sleep(2)
                 continue
             raise
